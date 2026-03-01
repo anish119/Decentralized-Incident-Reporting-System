@@ -79,7 +79,7 @@ router.post('/', upload.single('file'), async (req, res) => {
     });
   } catch (err) {
     console.error('Report submission error:', err.message || err);
-    res.status(500).json({ error: 'Server error during report submission' });
+    res.status(500).json({ error: err.stack || err.message || 'Server error during report submission' });
   }
 });
 

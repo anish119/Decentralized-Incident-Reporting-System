@@ -65,6 +65,9 @@ const ReportList = forwardRef((props, ref) => {
               <p><strong>Category:</strong> {report.category}</p>
               <p><strong>Description:</strong> {report.description}</p>
               <p><strong>Location:</strong> {report.location}</p>
+              {report.txHash && report.txHash !== 'Blockchain pending' && (
+                <p className="report-card-hash">⛓️ <strong>Tx Hash:</strong> <span>{report.txHash}</span></p>
+              )}
               {report.imageCID && (
                 <div className="report-image">
                   <img

@@ -251,6 +251,36 @@ body {
   font-size: 1rem;
 }
 
+.tx-hash-display {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed rgba(0, 206, 201, 0.3);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.tx-hash-display strong {
+  color: var(--primary-light);
+  word-break: break-all;
+  font-size: 0.85rem;
+}
+
+.report-card-hash {
+  background: rgba(108, 92, 231, 0.1);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.8rem !important;
+  color: var(--text-muted) !important;
+  margin-top: 8px;
+  border-left: 3px solid var(--primary-dark);
+}
+
+.report-card-hash span {
+  color: var(--primary-light);
+  word-break: break-all;
+}
+
 /* ===== Report List Styles ===== */
 .report-list {
   display: flex;

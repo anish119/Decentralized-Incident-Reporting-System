@@ -8,6 +8,7 @@ export default function ReportForm({ onReportSubmitted }) {
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('');
+  const [txHash, setTxHash] = useState('');
   const [reportId, setReportId] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const fileInputRef = useRef();
@@ -31,6 +32,7 @@ export default function ReportForm({ onReportSubmitted }) {
     try {
       const data = await submitReport(formData);
       setReportId(data.reportId);
+      setTxHash(data.txHash || '');
       setMessage('Report submitted successfully!');
       setMessageType('success');
       setDescription('');
@@ -60,6 +62,11 @@ export default function ReportForm({ onReportSubmitted }) {
       {reportId && (
         <div className="report-id-display">
           Your Report ID: <strong>{reportId}</strong>
+          {txHash && (
+            <div className="tx-hash-display">
+              ⛓️ Blockchain Hash: <br /><strong>{txHash}</strong>
+            </div>
+          )}
         </div>
       )}
 
