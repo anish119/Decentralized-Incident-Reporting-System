@@ -46,39 +46,39 @@ This system enables citizens to report incidents (crime, harassment, vandalism, 
 ```
 Capstone/
 ├── backend/
-│   ├── server.js              # Express setup + DB connection
-│   ├── .env                   # Environment variables (not in repo)
+│   ├── server.js                     # Express setup + DB connection
+│   ├── .env                          # Environment variables (not in repo)
 │   ├── models/
-│   │   └── report.js          # Mongoose schema (+ txHash field)
+│   │   └── report.js                 # Mongoose schema (+ txHash field)
 │   ├── routes/
-│   │   └── reports.js         # REST API endpoints + blockchain call
+│   │   └── reports.js                # REST API endpoints + blockchain call
 │   └── utils/
-│       ├── pinata.js          # Pinata IPFS upload utility
-│       ├── blockchain.js      # Smart contract bridge (ethers.js)
-│       └── contractABI.json   # Contract ABI for ethers.js
+│       ├── pinata.js                 # Pinata IPFS upload utility
+│       ├── blockchain.js             # Smart contract bridge (ethers.js)
+│       └── contractABI.json          # Contract ABI for ethers.js
 ├── frontend/
 │   ├── public/
 │   │   └── index.html
 │   └── src/
-│       ├── App.js             # Main app component
-│       ├── App.css            # Styling
-│       ├── index.js           # React entry point
+│       ├── App.js                    # Main app component
+│       ├── App.css                   # Styling
+│       ├── index.js                  # React entry point
 │       ├── components/
-│       │   ├── reportForm.js  # Report submission form
-│       │   ├── TrackReport.js # Single report verification portal
-│       │   ├── AdminDashboard.js # Investigator locked portal
-│       │   └── reportList.js  # Report listing component
+│       │   ├── reportForm.js         # Report submission form
+│       │   ├── TrackReport.js        # Single report verification portal
+│       │   ├── AdminDashboard.js     # Investigator locked portal
+│       │   └── reportList.js         # Report listing component
 │       └── utils/
-│           └── api.js         # Axios API calls
+│           └── api.js                # Axios API calls
 ├── blockchain/
 │   ├── contracts/
-│   │   └── reportHash.sol    # Solidity smart contract
+│   │   └── reportHash.sol            # Solidity smart contract
 │   ├── scripts/
-│   │   └── deploy.js          # Contract deployment script
+│   │   └── deploy.js                 # Contract deployment script
 │   ├── test/
-│   │   └── reportHash.test.js     # Unit tests (7 tests)
-│   ├── hardhat.config.js      # Hardhat configuration
-│   └── package.json           # Blockchain dependencies
+│   │   └── reportHash.test.js        # Unit tests (7 tests)
+│   ├── hardhat.config.js             # Hardhat configuration
+│   └── package.json            # Blockchain dependencies
 └── .gitignore
 ```
 
@@ -91,7 +91,7 @@ Capstone/
 
 ### 1. Clone the repo
 ```bash
-git clone https://github.com/YOUR_USERNAME/Decentralized-Incident-Reporting-System.git
+git clone https://github.com/aryanshu1911/Decentralized-Incident-Reporting-System.git
 cd Decentralized-Incident-Reporting-System
 ```
 
@@ -114,7 +114,9 @@ CONTRACT_ADDRESS=your_deployed_contract_address
 
 Start the backend:
 ```bash
-npm run dev
+cd backend
+npm install
+npm start
 ```
 
 ### 3. Frontend Setup
