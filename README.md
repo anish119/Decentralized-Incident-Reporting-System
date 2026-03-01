@@ -78,7 +78,7 @@ Capstone/
 │   ├── test/
 │   │   └── reportHash.test.js        # Unit tests (7 tests)
 │   ├── hardhat.config.js             # Hardhat configuration
-│   └── package.json            # Blockchain dependencies
+│   └── package.json                  # Blockchain dependencies
 └── .gitignore
 ```
 
