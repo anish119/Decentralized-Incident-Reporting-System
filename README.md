@@ -78,7 +78,7 @@ Capstone/
 │   ├── test/
 │   │   └── reportHash.test.js        # Unit tests (7 tests)
 │   ├── hardhat.config.js             # Hardhat configuration
-│   └── package.json            # Blockchain dependencies
+│   └── package.json                  # Blockchain dependencies
 └── .gitignore
 ```
 
@@ -114,8 +114,6 @@ CONTRACT_ADDRESS=your_deployed_contract_address
 
 Start the backend:
 ```bash
-cd backend
-npm install
 npm start
 ```
 
@@ -155,4 +153,3 @@ The app will open at **http://localhost:3000**
 ## 📄 License
 
 This project is developed as a Capstone Project for academic purposes.
-
