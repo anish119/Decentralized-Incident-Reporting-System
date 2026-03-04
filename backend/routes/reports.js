@@ -116,20 +116,34 @@ router.get('/:reportId/verify', async (req, res) => {
       return res.json({
         reportId: report.reportId,
         verified: false,
+        reason: 'no_blockchain_data',
         message: 'Report is missing blockchain verification data.'
       });
     }
 
-    // Ping the blockchain smart contract!
-    const isVerified = await verifyHashOnChain(report.reportId, report.blockchainHash);
+    // Recalculate hash from CURRENT database data
+    const recalculatedHash = crypto
+      .createHash('sha256')
+      .update(report.reportId + report.description + report.location + report.category + report.imageCID)
+      .digest('hex');
+
+    // Ping the blockchain smart contract with the RECALCULATED hash!
+    const result = await verifyHashOnChain(report.reportId, recalculatedHash);
+
+    const messages = {
+      match: 'Cryptographic Hash mathematically verified on the Ethereum Blockchain ✅',
+      not_on_chain: 'Report not found on the current blockchain node. The node may have been restarted.',
+      hash_mismatch: 'Warning: Blockchain data does not match database record (Data may have been altered) ❌',
+      error: 'Could not connect to blockchain for verification.',
+    };
 
     res.json({
       reportId: report.reportId,
-      verified: isVerified,
+      verified: result.verified,
+      reason: result.reason,
       blockchainHash: report.blockchainHash,
-      message: isVerified
-        ? 'Cryptographic Hash mathematically verified on the Ethereum Blockchain ✅'
-        : 'Warning: Blockchain data does not match database record ❌'
+      recalculatedHash,
+      message: messages[result.reason] || messages.error
     });
   } catch (err) {
     console.error(err);

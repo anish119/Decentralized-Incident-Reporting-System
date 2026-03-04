@@ -86,27 +86,27 @@ export default function TrackReport() {
                         <p><strong>Submitted On:</strong> {new Date(report.createdAt).toLocaleString()}</p>
 
                         {/* Cryptographic Verification Box */}
-                        {verification && (
+                        {verification && verification.verified && (
                             <div className="verification-box" style={{
                                 marginTop: '16px',
                                 padding: '16px',
-                                background: verification.verified ? 'rgba(0, 184, 148, 0.1)' : 'rgba(225, 112, 85, 0.1)',
-                                border: `1px solid ${verification.verified ? 'rgba(0, 184, 148, 0.3)' : 'rgba(225, 112, 85, 0.3)'}`,
+                                background: 'rgba(0, 184, 148, 0.1)',
+                                border: '1px solid rgba(0, 184, 148, 0.3)',
                                 borderRadius: '8px'
                             }}>
                                 <h4 style={{
-                                    color: verification.verified ? 'var(--success)' : 'var(--error)',
+                                    color: 'var(--success)',
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: '8px',
                                     marginBottom: '8px'
                                 }}>
-                                    {verification.verified ? '✅ On-Chain Verification Passed' : '❌ Blockchain Verification Failed'}
+                                    ✅ On-Chain Verification Passed
                                 </h4>
                                 <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{verification.message}</p>
                                 {verification.blockchainHash && (
                                     <div className="tx-hash-display" style={{ marginTop: '8px', paddingTop: '8px' }}>
-                                        <strong>Secured Hash:</strong><br />
+                                        <strong>Secured Hash on Blockchain:</strong><br />
                                         <span style={{ fontFamily: 'monospace', fontSize: '0.8rem', wordBreak: 'break-all' }}>
                                             {verification.blockchainHash}
                                         </span>
@@ -115,6 +115,62 @@ export default function TrackReport() {
                                 {report.txHash && report.txHash !== 'Blockchain pending' && (
                                     <div className="tx-hash-display" style={{ marginTop: '4px', paddingTop: '4px', borderTop: 'none' }}>
                                         <strong>Ethereum Tx:</strong><br />
+                                        <span style={{ fontFamily: 'monospace', fontSize: '0.8rem', wordBreak: 'break-all' }}>
+                                            {report.txHash}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                        {verification && !verification.verified && verification.reason === 'hash_mismatch' && (
+                            <div className="verification-box" style={{
+                                marginTop: '16px',
+                                padding: '16px',
+                                background: 'rgba(225, 112, 85, 0.1)',
+                                border: '1px solid rgba(225, 112, 85, 0.3)',
+                                borderRadius: '8px'
+                            }}>
+                                <h4 style={{
+                                    color: 'var(--error)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px',
+                                    marginBottom: '8px'
+                                }}>
+                                    ❌ TAMPERING DETECTED
+                                </h4>
+                                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{verification.message}</p>
+                                {verification.recalculatedHash && (
+                                    <div className="tx-hash-display" style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid rgba(225, 112, 85, 0.3)' }}>
+                                        <strong style={{ color: 'var(--error)' }}>Current Database Data Hash (Mismatch!):</strong><br />
+                                        <span style={{ fontFamily: 'monospace', fontSize: '0.8rem', wordBreak: 'break-all', color: 'var(--error)' }}>
+                                            {verification.recalculatedHash}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                        {verification && !verification.verified && verification.reason !== 'hash_mismatch' && (
+                            <div className="verification-box" style={{
+                                marginTop: '16px',
+                                padding: '16px',
+                                background: 'rgba(255, 193, 7, 0.1)',
+                                border: '1px solid rgba(255, 193, 7, 0.3)',
+                                borderRadius: '8px'
+                            }}>
+                                <h4 style={{
+                                    color: '#e6a800',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px',
+                                    marginBottom: '8px'
+                                }}>
+                                    ⚠️ Not Found on Blockchain
+                                </h4>
+                                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{verification.message}</p>
+                                {report.txHash && report.txHash !== 'Blockchain pending' && (
+                                    <div className="tx-hash-display" style={{ marginTop: '4px', paddingTop: '4px' }}>
+                                        <strong>Original Ethereum Tx:</strong><br />
                                         <span style={{ fontFamily: 'monospace', fontSize: '0.8rem', wordBreak: 'break-all' }}>
                                             {report.txHash}
                                         </span>

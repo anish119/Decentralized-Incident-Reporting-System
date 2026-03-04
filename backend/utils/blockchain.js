@@ -82,11 +82,18 @@ const verifyHashOnChain = async (reportId, hexHash) => {
     try {
         const bytes32Hash = '0x' + hexHash;
         console.log(`🔍 Verifying hash on blockchain for report: ${reportId}`);
+
+        try {
+            await contract.getReport(reportId);
+        } catch (e) {
+            return { verified: false, reason: 'not_on_chain' };
+        }
+
         const isVerified = await contract.verifyHash(reportId, bytes32Hash);
-        return isVerified;
+        return { verified: isVerified, reason: isVerified ? 'match' : 'hash_mismatch' };
     } catch (err) {
         console.error('⚠️  Failed to verify hash on blockchain:', err.message);
-        return false;
+        return { verified: false, reason: 'error' };
     }
 };
 

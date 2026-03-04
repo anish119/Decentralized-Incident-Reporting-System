@@ -1,9 +1,10 @@
 import { useEffect, useState, forwardRef, useImperativeHandle } from 'react';
-import { getReports, updateReportStatus } from '../utils/api';
+import { getReports, updateReportStatus, verifyReportOnChain } from '../utils/api';
 
 const ReportList = forwardRef(({ isAdmin = false }, ref) => {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [verifications, setVerifications] = useState({});
 
   useImperativeHandle(ref, () => ({
     refresh: fetchReports,
@@ -18,6 +19,18 @@ const ReportList = forwardRef(({ isAdmin = false }, ref) => {
     try {
       const data = await getReports();
       setReports(data);
+
+      if (isAdmin) {
+        // Fetch verification for all reports asynchronously
+        data.forEach(async (report) => {
+          try {
+            const verifyData = await verifyReportOnChain(report.reportId);
+            setVerifications(prev => ({ ...prev, [report.reportId]: verifyData }));
+          } catch (e) {
+            console.error("Verification failed for", report.reportId, e);
+          }
+        });
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -91,6 +104,51 @@ const ReportList = forwardRef(({ isAdmin = false }, ref) => {
               )}
             </div>
             <div className="report-card-body">
+              {isAdmin && verifications[report.reportId] && verifications[report.reportId].reason === 'hash_mismatch' && (
+                <div style={{
+                  marginBottom: '16px',
+                  padding: '12px',
+                  backgroundColor: 'rgba(225, 112, 85, 0.1)',
+                  border: '1px solid var(--error)',
+                  borderRadius: '8px',
+                  color: 'var(--error)'
+                }}>
+                  <strong>❌ TAMPERING DETECTED</strong>
+                  <p style={{ fontSize: '0.85rem', marginTop: '4px' }}>
+                    The data in the database does not match the cryptographic hash secured on the blockchain.
+                    This report may have been manipulated!
+                  </p>
+                </div>
+              )}
+              {isAdmin && verifications[report.reportId] && (verifications[report.reportId].reason === 'not_on_chain' || verifications[report.reportId].reason === 'no_blockchain_data' || verifications[report.reportId].reason === 'error') && (
+                <div style={{
+                  marginBottom: '16px',
+                  padding: '8px 12px',
+                  backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                  border: '1px solid rgba(255, 193, 7, 0.5)',
+                  borderRadius: '8px',
+                  color: '#e6a800',
+                  fontSize: '0.85rem'
+                }}>
+                  <strong>⚠️ Not Found on Blockchain</strong>
+                  <p style={{ fontSize: '0.8rem', marginTop: '4px', opacity: 0.85 }}>
+                    {verifications[report.reportId].message || 'This report is not currently on the blockchain node. The node may have been restarted.'}
+                  </p>
+                </div>
+              )}
+              {isAdmin && verifications[report.reportId] && verifications[report.reportId].verified && (
+                <div style={{
+                  marginBottom: '16px',
+                  padding: '8px 12px',
+                  backgroundColor: 'rgba(0, 184, 148, 0.1)',
+                  border: '1px solid var(--success)',
+                  borderRadius: '8px',
+                  color: 'var(--success)',
+                  fontSize: '0.85rem'
+                }}>
+                  <strong>✅ Blockchain Verified (Untampered)</strong>
+                </div>
+              )}
               <p><strong>Category:</strong> {report.category}</p>
               <p><strong>Description:</strong> {report.description}</p>
               <p><strong>Location:</strong> {report.location}</p>

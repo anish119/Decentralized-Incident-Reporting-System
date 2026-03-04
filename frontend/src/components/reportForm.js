@@ -41,8 +41,8 @@ export default function ReportForm({ onReportSubmitted }) {
       setFile(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
 
-      // Trigger auto-refresh of report list
-      if (onReportSubmitted) onReportSubmitted();
+      // Do NOT trigger auto-refresh immediately. Give user time to see their report ID.
+      // if (onReportSubmitted) onReportSubmitted();
     } catch (err) {
       console.error(err);
       setMessage(err.response?.data?.error || 'Error submitting report.');
@@ -61,12 +61,25 @@ export default function ReportForm({ onReportSubmitted }) {
       )}
       {reportId && (
         <div className="report-id-display">
+          <p>Please save your Report ID to track its status.</p>
           Your Report ID: <strong>{reportId}</strong>
           {txHash && (
             <div className="tx-hash-display">
               ⛓️ Blockchain Hash: <br /><strong>{txHash}</strong>
             </div>
           )}
+          <button
+            type="button"
+            className="btn-submit"
+            style={{ marginTop: "1rem", backgroundColor: "#2e7d32" }}
+            onClick={() => {
+              if (onReportSubmitted) onReportSubmitted();
+              setReportId('');
+              setMessage('');
+            }}
+          >
+            Track My Report Now
+          </button>
         </div>
       )}
 
