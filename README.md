@@ -22,12 +22,15 @@ This system enables citizens to report incidents (crime, harassment, vandalism, 
 
 ## ✨ Features
 
-- 📝 **Submit Reports** — description, location, category & image evidence
-- 📸 **IPFS Evidence Storage** — images uploaded to Pinata/IPFS for decentralized storage
+- 📝 **Submit Reports** — description, location, category & optional image evidence
+- � **Geolocation Support** — opt-in GPS coordinates for geospatial queries (GeoJSON + 2dsphere index)
+- �📸 **IPFS Evidence Storage** — images uploaded to Pinata/IPFS for decentralized storage
 - 🔒 **SHA-256 Hash Generation** — tamper-proof hash of report data + evidence CID
-- � **Track My Report** — instantly verify your report's cryptographic hash on the blockchain using your randomized ID
-- 👮 **Secure Admin Dashboard** — locked investigator portal to view all incoming reports
-- 🔄 **Status Management** — update report status (Pending → In Progress → Resolved) simultaneously on MongoDB and the Smart Contract
+- 🔍 **Track My Report** — verify your report's blockchain hash using your private Report ID (copy-to-clipboard)
+- � **Public Reports View** — read-only Recent/Trending views with summary data, status badges & relative timestamps
+- 🔥 **Trending Algorithm** — geospatial radius filtering + linear recency boost scoring
+- 👮 **Secure Investigator Panel** — passcode-locked portal with full report data, blockchain verification, status filter
+- 🔄 **Status Management** — update report status (Pending → In Progress → Resolved → Rejected) on MongoDB + Smart Contract
 - 🗑️ **Delete Reports** — remove reports via API
 
 ## 🛠️ Tech Stack
@@ -46,28 +49,31 @@ This system enables citizens to report incidents (crime, harassment, vandalism, 
 ```
 Capstone/
 ├── backend/
-│   ├── server.js                     # Express setup + DB connection
+│   ├── server.js                     # Express setup + MongoDB connection
 │   ├── .env                          # Environment variables (not in repo)
 │   ├── models/
-│   │   └── report.js                 # Mongoose schema (+ txHash field)
+│   │   └── report.js                 # Mongoose schema (GeoJSON location, trending fields, 2dsphere index)
 │   ├── routes/
-│   │   └── reports.js                # REST API endpoints + blockchain call
-│   └── utils/
-│       ├── pinata.js                 # Pinata IPFS upload utility
-│       ├── blockchain.js             # Smart contract bridge (ethers.js)
-│       └── contractABI.json          # Contract ABI for ethers.js
+│   │   └── reports.js                # REST API (public summary, admin full-data, trending, verify, status)
+│   ├── utils/
+│   │   ├── pinata.js                 # Pinata IPFS upload utility
+│   │   ├── blockchain.js             # Smart contract bridge (ethers.js)
+│   │   └── contractABI.json          # Contract ABI for ethers.js
+│   └── tests/
+│       └── trending.test.js          # Trending aggregation pipeline unit tests
 ├── frontend/
 │   ├── public/
 │   │   └── index.html
 │   └── src/
-│       ├── App.js                    # Main app component
-│       ├── App.css                   # Styling
+│       ├── App.js                    # Main app (4 tabs: Submit, Reports, Track, Investigator)
+│       ├── App.css                   # Global styling
 │       ├── index.js                  # React entry point
 │       ├── components/
-│       │   ├── reportForm.js         # Report submission form
-│       │   ├── TrackReport.js        # Single report verification portal
-│       │   ├── AdminDashboard.js     # Investigator locked portal
-│       │   └── reportList.js         # Report listing component
+│       │   ├── reportForm.js         # Submit form (optional image, GPS opt-in, Report ID copy)
+│       │   ├── PublicReports.js      # Public read-only view (Recent/Trending, summary-only)
+│       │   ├── TrackReport.js        # Track-by-ID (full details, blockchain verification)
+│       │   ├── AdminDashboard.js     # Investigator login gate
+│       │   └── reportList.js         # Admin report list (status filter, blockchain verification)
 │       └── utils/
 │           └── api.js                # Axios API calls
 ├── blockchain/
@@ -76,7 +82,7 @@ Capstone/
 │   ├── scripts/
 │   │   └── deploy.js                 # Contract deployment script
 │   ├── test/
-│   │   └── reportHash.test.js        # Unit tests (7 tests)
+│   │   └── reportHash.test.js        # Smart contract unit tests (7 tests)
 │   ├── hardhat.config.js             # Hardhat configuration
 │   └── package.json                  # Blockchain dependencies
 └── .gitignore
@@ -130,11 +136,13 @@ The app will open at **http://localhost:3000**
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `POST` | `/reports` | Submit a new report with image |
-| `GET` | `/reports` | Get all reports |
-| `GET` | `/reports/:reportId` | Get a specific report by ID |
+| `POST` | `/reports` | Submit a new report (optional image) |
+| `GET` | `/reports` | Get all reports (public summary-only fields) |
+| `GET` | `/reports/all` | Get all reports with full details (admin) |
+| `GET` | `/reports/trending` | Get trending reports by location (requires `lat`, `lng` params) |
+| `GET` | `/reports/:reportId` | Get a specific report by ID (full details) |
 | `GET` | `/reports/:reportId/verify` | Verify a report's SHA-256 hash against the Ethereum Ledger |
-| `PUT` | `/reports/:reportId/status` | Update report status |
+| `PUT` | `/reports/:reportId/status` | Update report status (Pending, In Progress, Resolved, Rejected) |
 | `DELETE` | `/reports/:reportId` | Delete a report |
 
 ## 🔐 Security Considerations
@@ -143,6 +151,9 @@ The app will open at **http://localhost:3000**
 - Image evidence is stored on decentralized IPFS — not on a single server
 - SHA-256 hash ensures data integrity — any tampering changes the hash
 - File uploads restricted to images only (JPEG, PNG) with 2MB limit
+- Public API endpoints return summary-only data — no blockchain hashes or IPFS CIDs exposed
+- Report ID acts as a private access token — only holders can view full report details
+- Status updates validated against allowed values (Pending, In Progress, Resolved, Rejected)
 
 ## 🚀 Future Enhancements
 
