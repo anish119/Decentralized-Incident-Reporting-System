@@ -13,13 +13,8 @@
 //
 
 const Report = require('../models/report');
-const { storeHashOnChain } = require('./blockchain');
-const { ethers } = require('ethers');
-const contractABI = require('./contractABI.json');
+const { storeHashOnChain, contract, wallet } = require('./blockchain');
 require('dotenv').config();
-
-const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
-const contract = new ethers.Contract(process.env.CONTRACT_ADDRESS, contractABI, provider);
 
 /**
  * Check if a report already exists on the current blockchain node
@@ -54,6 +49,9 @@ const syncReportsToBlockchain = async () => {
         let skipped = 0;
         let failed = 0;
 
+        // Get the initial nonce for the wallet to avoid race conditions
+        let currentNonce = await wallet.getNonce();
+
         for (const report of reports) {
             try {
                 // Check if already on-chain (idempotent — don't re-store if already there)
@@ -63,13 +61,17 @@ const syncReportsToBlockchain = async () => {
                     continue;
                 }
 
-                // Re-store hash on blockchain
-                const txHash = await storeHashOnChain(report.reportId, report.blockchainHash);
+                // Re-store hash on blockchain with explicit nonce
+                const txHash = await storeHashOnChain(report.reportId, report.blockchainHash, {
+                    nonce: currentNonce
+                });
+
                 if (txHash) {
                     // Update the txHash in MongoDB to the new one
                     report.txHash = txHash;
                     await report.save();
                     synced++;
+                    currentNonce++; // Increment nonce for the next transaction
                 } else {
                     failed++;
                 }

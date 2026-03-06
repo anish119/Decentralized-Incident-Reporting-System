@@ -9,10 +9,10 @@ const fs = require('fs');
 const { uploadFileToPinata } = require('../utils/pinata');
 const { storeHashOnChain, updateStatusOnChain, verifyHashOnChain } = require('../utils/blockchain');
 
-// Multer setup: store temp files in 'uploads/' with 2MB limit
+// Multer setup: store temp files in 'uploads/' with 10MB limit
 const upload = multer({
   dest: path.join(__dirname, '..', 'uploads'),
-  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
   fileFilter: (req, file, cb) => {
     const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
     if (!allowedTypes.includes(file.mimetype)) {
@@ -100,7 +100,7 @@ router.get('/', async (req, res) => {
   try {
     // Only return fields safe for public display
     const reports = await Report.find()
-      .select('reportId category description locationText status createdAt')
+      .select('reportId category description locationText status imageCID createdAt')
       .sort({ createdAt: -1 });
     res.json(reports);
   } catch (err) {
@@ -117,87 +117,6 @@ router.get('/all', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error fetching reports' });
-  }
-});
-
-// GET: top trending reports by location
-router.get('/trending', async (req, res) => {
-  try {
-    const { lat, lng, radius = 10000, limit = 10 } = req.query;
-
-    if (!lat || !lng) {
-      return res.status(400).json({ error: 'Latitude and longitude are required' });
-    }
-
-    const maxDistance = parseFloat(radius);
-    const resultLimit = parseInt(limit);
-
-    const pipeline = [
-      // Stage 1: Filter by radius from user's location (only documents with valid coordinates)
-      {
-        $geoNear: {
-          near: { type: 'Point', coordinates: [parseFloat(lng), parseFloat(lat)] },
-          distanceField: 'distance',
-          maxDistance: maxDistance,
-          spherical: true,
-          query: { "location.coordinates": { $exists: true } }
-        }
-      },
-      // Stage 2: Calculate how many hours ago the report was created
-      {
-        $addFields: {
-          hours_since_post: {
-            $divide: [
-              { $subtract: [new Date(), "$createdAt"] },
-              3600000 // milliseconds in one hour
-            ]
-          }
-        }
-      },
-      // Stage 3: Linear recency boost — decays from 10 to 0 over ~10 days (240 hours)
-      // Formula: recencyBoost = max(0, 10 - (hours_since_post / 24))
-      {
-        $addFields: {
-          recencyBoost: {
-            $max: [
-              0,
-              { $subtract: [10, { $divide: ["$hours_since_post", 24] }] }
-            ]
-          }
-        }
-      },
-      // Stage 4: Compute final trending score
-      // score = (2 × upvotes) + (1.5 × commentsCount) + (3 × severity) + recencyBoost
-      {
-        $addFields: {
-          score: {
-            $add: [
-              { $multiply: [2, { $ifNull: ["$upvotes", 0] }] },
-              { $multiply: [1.5, { $ifNull: ["$commentsCount", 0] }] },
-              { $multiply: [3, { $ifNull: ["$severity", 1] }] },
-              "$recencyBoost"
-            ]
-          }
-        }
-      },
-      // Stage 5 & 6: Sort by score descending and limit results
-      { $sort: { score: -1 } },
-      { $limit: resultLimit },
-      // Stage 7: Project only public-safe summary fields
-      {
-        $project: {
-          reportId: 1, category: 1, description: 1, locationText: 1,
-          status: 1, createdAt: 1, score: 1, distance: 1,
-          upvotes: 1, commentsCount: 1, severity: 1
-        }
-      }
-    ];
-
-    const trendingReports = await Report.aggregate(pipeline);
-    res.json(trendingReports);
-  } catch (err) {
-    console.error('Trending fetch error:', err);
-    res.status(500).json({ error: 'Server error fetching trending reports' });
   }
 });
 

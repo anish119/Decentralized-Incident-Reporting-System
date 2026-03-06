@@ -4,12 +4,12 @@ import ReportForm from './components/reportForm';
 import PublicReports from './components/PublicReports';
 import TrackReport from './components/TrackReport';
 import AdminDashboard from './components/AdminDashboard';
+import { getReports } from './utils/api';
 
 function App() {
   const [activeTab, setActiveTab] = useState('submit'); // 'submit', 'reports', 'track', 'admin'
 
   const handleReportSubmitted = () => {
-    // Optionally automatically switch to the Track tab so the user can see their verification immediately
     setActiveTab('track');
   };
 

@@ -32,13 +32,15 @@ const contract = new ethers.Contract(CONTRACT_ADDRESS, contractABI, wallet);
  * @param {string} hexHash    - SHA-256 hash as hex string (without 0x prefix)
  * @returns {string|null}     - Transaction hash on success, null on failure
  */
-const storeHashOnChain = async (reportId, hexHash) => {
+const storeHashOnChain = async (reportId, hexHash, customOptions = {}) => {
     try {
         // Convert hex string → bytes32 (smart contract expects this format)
         const bytes32Hash = '0x' + hexHash;
 
         console.log(`⛓️  Sending hash to blockchain for report: ${reportId}`);
-        const tx = await contract.storeHash(reportId, bytes32Hash);
+        const tx = await contract.storeHash(reportId, bytes32Hash, {
+            ...customOptions
+        });
 
         // Wait for the transaction to be mined (confirmed)
         const receipt = await tx.wait();
@@ -97,4 +99,11 @@ const verifyHashOnChain = async (reportId, hexHash) => {
     }
 };
 
-module.exports = { storeHashOnChain, updateStatusOnChain, verifyHashOnChain };
+module.exports = {
+    storeHashOnChain,
+    updateStatusOnChain,
+    verifyHashOnChain,
+    provider,
+    wallet,
+    contract
+};

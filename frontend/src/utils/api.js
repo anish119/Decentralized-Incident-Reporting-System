@@ -24,14 +24,6 @@ export const getAllReports = async () => {
   return response.data;
 };
 
-// Get trending reports
-export const getTrendingReports = async (lat, lng, radius = 10000, limit = 10) => {
-  const response = await axios.get(`${API_URL}/trending`, {
-    params: { lat, lng, radius, limit }
-  });
-  return response.data;
-};
-
 // Update report status (admin use)
 export const updateReportStatus = async (reportId, status) => {
   const response = await axios.put(`${API_URL}/${reportId}/status`, { status });

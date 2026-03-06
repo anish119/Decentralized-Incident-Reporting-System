@@ -4,10 +4,6 @@ import { submitReport } from '../utils/api';
 export default function ReportForm({ onReportSubmitted }) {
   const [description, setDescription] = useState('');
   const [locationText, setLocationText] = useState('');
-  const [latitude, setLatitude] = useState(null);
-  const [longitude, setLongitude] = useState(null);
-  const [locationError, setLocationError] = useState('');
-  const [isLocating, setIsLocating] = useState(false);
   const [category, setCategory] = useState('');
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState('');
@@ -16,36 +12,6 @@ export default function ReportForm({ onReportSubmitted }) {
   const [reportId, setReportId] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const fileInputRef = useRef();
-
-  const handleGetLocation = () => {
-    if (!navigator.geolocation) {
-      setLocationError('Geolocation is not supported by your browser.');
-      return;
-    }
-
-    setIsLocating(true);
-    setLocationError('');
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setLatitude(position.coords.latitude);
-        setLongitude(position.coords.longitude);
-        setIsLocating(false);
-        // Optionally append to text if empty
-        if (!locationText) {
-          setLocationText(`Lat: ${position.coords.latitude.toFixed(4)}, Lng: ${position.coords.longitude.toFixed(4)}`);
-        }
-      },
-      (error) => {
-        setIsLocating(false);
-        let errorMsg = 'Unable to retrieve location.';
-        if (error.code === error.PERMISSION_DENIED) {
-          errorMsg = 'Location permission denied. Please enter text manually.';
-        }
-        setLocationError(errorMsg);
-      }
-    );
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -64,10 +30,6 @@ export default function ReportForm({ onReportSubmitted }) {
     if (file) {
       formData.append('file', file);
     }
-    if (latitude && longitude) {
-      formData.append('latitude', latitude);
-      formData.append('longitude', longitude);
-    }
 
     try {
       const data = await submitReport(formData);
@@ -77,8 +39,6 @@ export default function ReportForm({ onReportSubmitted }) {
       setMessageType('success');
       setDescription('');
       setLocationText('');
-      setLatitude(null);
-      setLongitude(null);
       setCategory('');
       setFile(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -182,26 +142,13 @@ export default function ReportForm({ onReportSubmitted }) {
 
         <div className="form-group">
           <label htmlFor="location">Location</label>
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <input
-              type="text"
-              id="location"
-              placeholder="e.g. 123 Main Street, City"
-              value={locationText}
-              onChange={(e) => setLocationText(e.target.value)}
-              style={{ flex: 1 }}
-            />
-            <button
-              type="button"
-              onClick={handleGetLocation}
-              disabled={isLocating}
-              style={{ padding: '0 15px', cursor: 'pointer' }}
-            >
-              {isLocating ? 'Locating...' : '📍 Use GPS'}
-            </button>
-          </div>
-          {locationError && <p style={{ color: 'var(--error)', fontSize: '0.85rem', marginTop: '5px' }}>{locationError}</p>}
-          {latitude && !locationError && <p style={{ color: 'var(--success)', fontSize: '0.85rem', marginTop: '5px' }}>✅ GPS Coordinates captured</p>}
+          <input
+            type="text"
+            id="location"
+            placeholder="e.g. 123 Main Street, City"
+            value={locationText}
+            onChange={(e) => setLocationText(e.target.value)}
+          />
         </div>
 
         <div className="form-group">
@@ -218,7 +165,7 @@ export default function ReportForm({ onReportSubmitted }) {
             ) : (
               <p className="upload-text">
                 <span className="highlight">Click to upload</span> or drag & drop<br />
-                JPEG, JPG, PNG (max 2MB)
+                JPEG, JPG, PNG (max 10MB)
               </p>
             )}
           </div>

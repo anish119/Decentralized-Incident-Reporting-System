@@ -17,83 +17,29 @@ const ReportList = forwardRef(({ isAdmin = false }, ref) => {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [verifications, setVerifications] = useState({});
-  const [viewMode, setViewMode] = useState('recent'); // 'recent' | 'trending'
-  const [locationError, setLocationError] = useState('');
   const [statusFilter, setStatusFilter] = useState('All'); // Admin status filter
+  const [selectedImage, setSelectedImage] = useState(null);
 
   useImperativeHandle(ref, () => ({
     refresh: () => {
-      if (viewMode === 'recent') fetchReports();
-      else fetchTrendingReports();
+      fetchReports();
     },
   }));
 
   useEffect(() => {
-    if (viewMode === 'recent') {
-      fetchReports();
-    } else {
-      fetchTrendingReports();
-    }
-  }, [viewMode]);
-
-  // Default center coordinates (Mumbai) used when user denies location access
-  const DEFAULT_CENTER = { lat: 19.0760, lng: 72.8777 };
-
-  const fetchTrendingReports = async () => {
-    setLoading(true);
-    setLocationError('');
-
-    const fetchFromCoords = async (lat, lng, isDefault = false) => {
-      try {
-        const data = await getTrendingReports(lat, lng);
-        setReports(data);
-
-        if (isDefault) {
-          setLocationError('Location access denied. Showing trending reports near default center (Mumbai).');
-        }
-
-        if (isAdmin) {
-          data.forEach(async (report) => {
-            try {
-              const verifyData = await verifyReportOnChain(report.reportId);
-              setVerifications(prev => ({ ...prev, [report.reportId]: verifyData }));
-            } catch (e) {
-              console.error("Verification failed for", report.reportId, e);
-            }
-          });
-        }
-      } catch (err) {
-        console.error(err);
-        setLocationError('Error fetching trending reports.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (!navigator.geolocation) {
-      await fetchFromCoords(DEFAULT_CENTER.lat, DEFAULT_CENTER.lng, true);
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        await fetchFromCoords(position.coords.latitude, position.coords.longitude);
-      },
-      async () => {
-        await fetchFromCoords(DEFAULT_CENTER.lat, DEFAULT_CENTER.lng, true);
-      }
-    );
-  };
+    fetchReports();
+  }, []);
 
   const fetchReports = async () => {
     setLoading(true);
     try {
-      // Admin view uses full-data endpoint
+      // Admin/Investigator view uses full-data endpoint
       const data = await getAllReports();
-      setReports(data);
+      const reportsData = Array.isArray(data) ? data : (data.value || []);
+      setReports(reportsData);
 
       if (isAdmin) {
-        data.forEach(async (report) => {
+        reportsData.forEach(async (report) => {
           try {
             const verifyData = await verifyReportOnChain(report.reportId);
             setVerifications(prev => ({ ...prev, [report.reportId]: verifyData }));
@@ -142,65 +88,31 @@ const ReportList = forwardRef(({ isAdmin = false }, ref) => {
 
   return (
     <div className="card">
-      <h2><span className="icon">📋</span> All Reports</h2>
-
-      <div style={{ marginBottom: '20px', display: 'flex', gap: '10px' }}>
-        <button
-          onClick={() => setViewMode('recent')}
-          className="btn-submit"
-          style={{
-            backgroundColor: viewMode === 'recent' ? '#1976d2' : '#e0e0e0',
-            color: viewMode === 'recent' ? '#fff' : '#333',
-            flex: 1
-          }}
-        >
-          Recent Activity
-        </button>
-        <button
-          onClick={() => setViewMode('trending')}
-          className="btn-submit"
-          style={{
-            backgroundColor: viewMode === 'trending' ? '#1976d2' : '#e0e0e0',
-            color: viewMode === 'trending' ? '#fff' : '#333',
-            flex: 1
-          }}
-        >
-          🔥 Trending Near Me
-        </button>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <h2 style={{ margin: 0 }}><span className="icon">📋</span> All Reports</h2>
+        {isAdmin && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+              Filter:
+            </label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              style={{
+                padding: '6px 12px', borderRadius: '6px',
+                background: 'var(--bg-input)', color: 'var(--text)',
+                border: '1px solid var(--border)', fontSize: '0.85rem'
+              }}
+            >
+              <option value="All">All</option>
+              <option value="Pending">Pending</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Resolved">Resolved</option>
+              <option value="Rejected">Rejected</option>
+            </select>
+          </div>
+        )}
       </div>
-
-      {/* Admin status filter */}
-      {isAdmin && (
-        <div style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-            Filter by Status:
-          </label>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            style={{
-              padding: '6px 12px', borderRadius: '6px',
-              background: 'var(--bg-input)', color: 'var(--text)',
-              border: '1px solid var(--border)', fontSize: '0.85rem'
-            }}
-          >
-            <option value="All">All</option>
-            <option value="Pending">Pending</option>
-            <option value="In Progress">In Progress</option>
-            <option value="Resolved">Resolved</option>
-            <option value="Rejected">Rejected</option>
-          </select>
-          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-            ({filteredReports.length} report{filteredReports.length !== 1 ? 's' : ''})
-          </span>
-        </div>
-      )}
-
-      {locationError && (
-        <div style={{ marginBottom: '15px', color: 'var(--error)' }}>
-          ⚠️ {locationError}
-        </div>
-      )}
 
       {loading && (
         <div className="loading">
@@ -258,23 +170,6 @@ const ReportList = forwardRef(({ isAdmin = false }, ref) => {
                   <strong>❌ TAMPERING DETECTED</strong>
                   <p style={{ fontSize: '0.85rem', marginTop: '4px' }}>
                     The data in the database does not match the cryptographic hash secured on the blockchain.
-                    This report may have been manipulated!
-                  </p>
-                </div>
-              )}
-              {isAdmin && verifications[report.reportId] && (verifications[report.reportId].reason === 'not_on_chain' || verifications[report.reportId].reason === 'no_blockchain_data' || verifications[report.reportId].reason === 'error') && (
-                <div style={{
-                  marginBottom: '16px',
-                  padding: '8px 12px',
-                  backgroundColor: 'rgba(255, 193, 7, 0.1)',
-                  border: '1px solid rgba(255, 193, 7, 0.5)',
-                  borderRadius: '8px',
-                  color: '#e6a800',
-                  fontSize: '0.85rem'
-                }}>
-                  <strong>⚠️ Not Found on Blockchain</strong>
-                  <p style={{ fontSize: '0.8rem', marginTop: '4px', opacity: 0.85 }}>
-                    {verifications[report.reportId].message || 'This report is not currently on the blockchain node. The node may have been restarted.'}
                   </p>
                 </div>
               )}
@@ -288,37 +183,53 @@ const ReportList = forwardRef(({ isAdmin = false }, ref) => {
                   color: 'var(--success)',
                   fontSize: '0.85rem'
                 }}>
-                  <strong>✅ Blockchain Verified (Untampered)</strong>
-                </div>
-              )}
-
-              {/* Trending score (only in trending view) */}
-              {viewMode === 'trending' && report.score !== undefined && (
-                <div style={{ backgroundColor: 'rgba(25, 118, 210, 0.1)', padding: '10px', borderRadius: '5px', marginBottom: '10px', border: '1px solid rgba(25, 118, 210, 0.3)' }}>
-                  <strong style={{ color: '#1976d2' }}>🔥 Trending Score:</strong> {report.score.toFixed(2)} <br />
-                  <strong>📍 Distance:</strong> {(report.distance / 1000).toFixed(2)} km <br />
-                  <span style={{ fontSize: '0.85rem' }}>👍 Upvotes: {report.upvotes || 0} | 💬 Comments: {report.commentsCount || 0} | 🚨 Severity: {report.severity || 1}</span>
+                  <strong>✅ Blockchain Verified</strong>
                 </div>
               )}
 
               <p><strong>Category:</strong> {report.category}</p>
               <p><strong>Description:</strong> {report.description}</p>
-              <p><strong>Location:</strong> {report.locationText || report.location}</p>
-              {report.txHash && report.txHash !== 'Blockchain pending' && (
-                <p className="report-card-hash">⛓️ <strong>Tx Hash:</strong> <span>{report.txHash}</span></p>
-              )}
+              <p><strong>Location:</strong> {report.locationText || report.location?.coordinates?.join(', ') || 'N/A'}</p>
+
               {report.imageCID && report.imageCID !== "NO_IMAGE" && (
-                <div className="report-image">
+                <div className="report-image" style={{ marginTop: '15px' }}>
                   <img
                     src={`https://gateway.pinata.cloud/ipfs/${report.imageCID}`}
-                    alt="Report evidence"
+                    alt="Evidence"
+                    onClick={() => setSelectedImage(report.imageCID)}
+                    style={{
+                      width: '100%',
+                      maxHeight: '400px',
+                      objectFit: 'contain',
+                      borderRadius: '12px',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      background: 'rgba(0,0,0,0.2)',
+                      cursor: 'zoom-in'
+                    }}
                   />
                 </div>
+              )}
+
+              {report.txHash && report.txHash !== 'Blockchain pending' && (
+                <p className="report-card-hash" style={{ marginTop: '15px', fontSize: '0.75rem', opacity: 0.7 }}>
+                  ⛓️ <strong>Tx Hash:</strong> {report.txHash}
+                </p>
               )}
             </div>
           </div>
         ))}
       </div>
+
+      {/* Image Modal overlay */}
+      {selectedImage && (
+        <div className="image-modal-overlay" onClick={() => setSelectedImage(null)}>
+          <img
+            src={`https://gateway.pinata.cloud/ipfs/${selectedImage}`}
+            alt="Enlarged Evidence"
+            className="image-modal-content"
+          />
+        </div>
+      )}
     </div>
   );
 });
