@@ -112,7 +112,9 @@ router.get('/', async (req, res) => {
 
       return {
         ...r.toObject(),
-        isTampered: recalculatedHash !== r.blockchainHash
+        isTampered: r.blockchainHash && r.txHash && r.txHash !== 'Blockchain pending'
+          ? recalculatedHash !== r.blockchainHash
+          : false
       };
     });
 
@@ -137,7 +139,9 @@ router.get('/all', async (req, res) => {
 
       return {
         ...r.toObject(),
-        isTampered: recalculatedHash !== r.blockchainHash
+        isTampered: r.blockchainHash && r.txHash && r.txHash !== 'Blockchain pending'
+          ? recalculatedHash !== r.blockchainHash
+          : false
       };
     });
 
