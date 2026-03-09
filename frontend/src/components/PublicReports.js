@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getReports, getTrendingReports } from '../utils/api';
+import { getReports, getTrendingReports, upvoteReport, disputeReport } from '../utils/api';
 
 // Helper: compute a human-readable relative time string
 function timeAgo(dateString) {
@@ -29,6 +29,8 @@ export default function PublicReports() {
     const [reports, setReports] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedImage, setSelectedImage] = useState(null);
+    const [votingIds, setVotingIds] = useState(new Set()); // track which reports are currently being voted on to prevent double clicks
+    const [votedReports, setVotedReports] = useState(new Set()); // simple local tracking to prevent immediate re-voting
 
     useEffect(() => {
         fetchReports();
@@ -45,6 +47,33 @@ export default function PublicReports() {
             console.error(err);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleVote = async (reportId, type) => {
+        if (votingIds.has(reportId) || votedReports.has(reportId)) return;
+
+        setVotingIds(prev => new Set(prev).add(reportId));
+
+        try {
+            if (type === 'upvote') {
+                const res = await upvoteReport(reportId);
+                setReports(reports.map(r => r.reportId === reportId ? { ...r, upvotes: res.upvotes } : r));
+            } else if (type === 'dispute') {
+                const res = await disputeReport(reportId);
+                setReports(reports.map(r => r.reportId === reportId ? { ...r, disputes: res.disputes } : r));
+            }
+            // Mark as voted for this session
+            setVotedReports(prev => new Set(prev).add(reportId));
+        } catch (err) {
+            console.error("Failed to submit vote:", err);
+            alert("Failed to submit vote. Please try again.");
+        } finally {
+            setVotingIds(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(reportId);
+                return newSet;
+            });
         }
     };
 
@@ -74,9 +103,18 @@ export default function PublicReports() {
                     <div className="report-card" key={report.reportId || report._id}>
                         <div className="report-card-header">
                             <span className="time-ago">🕐 Reported {timeAgo(report.createdAt)}</span>
-                            <span className={`status-badge ${getStatusClass(report.status)}`}>
-                                {report.status}
-                            </span>
+                            <div className="report-badges">
+                                {report.isTampered ? (
+                                    <span className="badge-tampered" title="Data has been modified since submission!">❌ Tampered</span>
+                                ) : report.txHash && report.txHash !== 'Blockchain pending' ? (
+                                    <span className="badge-authentic" title="Secured on Blockchain">🛡️ Authentic</span>
+                                ) : (
+                                    <span className="badge-pending-chain" title="Awaiting Blockchain Confirmation">⏳ Pending Chain</span>
+                                )}
+                                <span className={`status-badge ${getStatusClass(report.status)}`}>
+                                    {report.status}
+                                </span>
+                            </div>
                         </div>
                         <div className="report-card-body">
                             <p><strong>Category:</strong> {report.category}</p>
@@ -101,6 +139,24 @@ export default function PublicReports() {
                                     />
                                 </div>
                             )}
+
+                            {/* Community Validation Section */}
+                            <div className="community-validation">
+                                <button
+                                    className={`vote-btn upvote ${votedReports.has(report.reportId) ? 'disabled' : ''}`}
+                                    onClick={() => handleVote(report.reportId, 'upvote')}
+                                    disabled={votingIds.has(report.reportId) || votedReports.has(report.reportId)}
+                                >
+                                    👍 <span className="vote-count">{report.upvotes || 0}</span>
+                                </button>
+                                <button
+                                    className={`vote-btn dispute ${votedReports.has(report.reportId) ? 'disabled' : ''}`}
+                                    onClick={() => handleVote(report.reportId, 'dispute')}
+                                    disabled={votingIds.has(report.reportId) || votedReports.has(report.reportId)}
+                                >
+                                    🚩 <span className="vote-count">{report.disputes || 0}</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 ))}

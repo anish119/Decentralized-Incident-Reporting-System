@@ -566,20 +566,49 @@ body {
   margin-bottom: 12px;
 }
 
+.report-badges {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
 .report-card-id {
   font-family: 'Courier New', monospace;
   font-size: 0.8rem;
   color: var(--text-muted);
 }
 
-.status-badge {
-  display: inline-block;
+.status-badge,
+.badge-authentic,
+.badge-pending-chain,
+.badge-tampered {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   padding: 4px 12px;
   border-radius: 20px;
   font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+.badge-authentic {
+  background: rgba(0, 184, 148, 0.1);
+  color: #00b894;
+  border: 1px solid rgba(0, 184, 148, 0.3);
+}
+
+.badge-pending-chain {
+  background: rgba(160, 174, 192, 0.1);
+  color: var(--text-muted);
+  border: 1px solid rgba(160, 174, 192, 0.3);
+}
+
+.badge-tampered {
+  background: rgba(225, 112, 85, 0.1);
+  color: var(--error);
+  border: 1px solid rgba(225, 112, 85, 0.3);
 }
 
 .status-badge.pending {
@@ -651,6 +680,56 @@ body {
 
 .report-image img:hover {
   transform: scale(1.03);
+}
+
+/* Community Validation */
+.community-validation {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px dashed var(--border);
+}
+
+.vote-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.vote-btn:not(:disabled):hover {
+  transform: translateY(-2px);
+}
+
+.vote-btn.upvote:not(:disabled):hover,
+.vote-btn.upvote.disabled {
+  background: rgba(0, 184, 148, 0.1);
+  color: var(--success);
+  border-color: rgba(0, 184, 148, 0.3);
+}
+
+.vote-btn.dispute:not(:disabled):hover,
+.vote-btn.dispute.disabled {
+  background: rgba(225, 112, 85, 0.1);
+  color: var(--error);
+  border-color: rgba(225, 112, 85, 0.3);
+}
+
+.vote-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+.vote-count {
+  font-weight: 700;
 }
 
 /* Loading & Empty States */

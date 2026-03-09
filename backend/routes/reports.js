@@ -98,11 +98,25 @@ router.post('/', upload.single('file'), async (req, res) => {
 // GET: all reports (public — returns summary-only fields for privacy)
 router.get('/', async (req, res) => {
   try {
-    // Only return fields safe for public display
+    // Only return fields safe for public display, now including community validation and authenticity info
     const reports = await Report.find()
-      .select('reportId category description locationText status imageCID createdAt')
+      .select('reportId category description locationText status imageCID createdAt upvotes disputes txHash blockchainHash')
       .sort({ createdAt: -1 });
-    res.json(reports);
+
+    const processedReports = reports.map(r => {
+      const imgCID = r.imageCID || "NO_IMAGE";
+      const recalculatedHash = crypto
+        .createHash('sha256')
+        .update(r.reportId + r.description + r.locationText + r.category + imgCID)
+        .digest('hex');
+
+      return {
+        ...r.toObject(),
+        isTampered: recalculatedHash !== r.blockchainHash
+      };
+    });
+
+    res.json(processedReports);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error fetching reports' });
@@ -113,7 +127,21 @@ router.get('/', async (req, res) => {
 router.get('/all', async (req, res) => {
   try {
     const reports = await Report.find().sort({ createdAt: -1 });
-    res.json(reports);
+
+    const processedReports = reports.map(r => {
+      const imgCID = r.imageCID || "NO_IMAGE";
+      const recalculatedHash = crypto
+        .createHash('sha256')
+        .update(r.reportId + r.description + r.locationText + r.category + imgCID)
+        .digest('hex');
+
+      return {
+        ...r.toObject(),
+        isTampered: recalculatedHash !== r.blockchainHash
+      };
+    });
+
+    res.json(processedReports);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error fetching reports' });
@@ -176,6 +204,38 @@ router.get('/:reportId/verify', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error verifying report' });
+  }
+});
+
+// POST: Upvote a report (Community Validation)
+router.post('/:reportId/upvote', async (req, res) => {
+  try {
+    const report = await Report.findOneAndUpdate(
+      { reportId: req.params.reportId },
+      { $inc: { upvotes: 1 } },
+      { new: true }
+    );
+    if (!report) return res.status(404).json({ error: 'Report not found' });
+    res.json({ message: 'Upvote successful', upvotes: report.upvotes });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error updating upvotes' });
+  }
+});
+
+// POST: Dispute/Flag a report (Community Validation)
+router.post('/:reportId/dispute', async (req, res) => {
+  try {
+    const report = await Report.findOneAndUpdate(
+      { reportId: req.params.reportId },
+      { $inc: { disputes: 1 } },
+      { new: true }
+    );
+    if (!report) return res.status(404).json({ error: 'Report not found' });
+    res.json({ message: 'Dispute registered', disputes: report.disputes });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error updating disputes' });
   }
 });
 

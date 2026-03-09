@@ -41,3 +41,15 @@ export const verifyReportOnChain = async (reportId) => {
   const response = await axios.get(`${API_URL}/${reportId}/verify`);
   return response.data;
 };
+
+// Upvote a report
+export const upvoteReport = async (reportId) => {
+  const response = await axios.post(`${API_URL}/${reportId}/upvote`);
+  return response.data;
+};
+
+// Dispute/Flag a report
+export const disputeReport = async (reportId) => {
+  const response = await axios.post(`${API_URL}/${reportId}/dispute`);
+  return response.data;
+};

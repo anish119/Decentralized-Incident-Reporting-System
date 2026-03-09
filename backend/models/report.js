@@ -14,6 +14,7 @@ const reportSchema = new mongoose.Schema({
   txHash: { type: String, default: null },
   status: { type: String, default: 'Pending' },
   upvotes: { type: Number, default: 0 },
+  disputes: { type: Number, default: 0 },
   commentsCount: { type: Number, default: 0 },
   severity: { type: Number, default: 1 },
   createdAt: { type: Date, default: Date.now }
