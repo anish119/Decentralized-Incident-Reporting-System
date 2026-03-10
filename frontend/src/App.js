@@ -16,7 +16,7 @@ function App() {
   return (
     <div className="App">
       <header className="app-header">
-        <h1>🛡️ Anonymous Reporting System</h1>
+        <h1>Voices Unchained: Anonymous Reporting System</h1>
         <p>Report incidents securely with blockchain-backed evidence</p>
       </header>
 
