@@ -67,12 +67,13 @@ This system enables citizens to report incidents (crime, harassment, vandalism, 
 
 | Layer | Technology |
 |-------|-----------|
-| **Frontend** | React 18, Axios |
-| **Backend** | Node.js, Express 5, ethers.js |
-| **Database** | MongoDB (Mongoose) |
+| **Frontend** | React |
+| **Backend** | Node.js, Express,js |
+| **Database** | MongoDB |
 | **File Storage** | IPFS via Pinata |
-| **Blockchain** | Solidity, Hardhat/Polygon Amoy |
-| **File Upload** | Multer |
+| **Blockchain** | Solidity + Hardhat |
+| **Web3 Library** | ethers.js |
+| **Hashing** | SHA-256 |
 
 ## 📁 Project Structure
 
