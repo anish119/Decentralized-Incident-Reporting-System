@@ -17,14 +17,14 @@ This system enables citizens to report incidents (crime, harassment, vandalism, 
                                   HTTP / REST
                                         │
                                         ▼
-                        ┌───────────────────────────┐
-                        │        Express API        │
-                        │        (Node.js)          │
-                        │                           │
-                        │ • Report Processing       │
-                        │ • SHA-256 Hash Creation   │
-                        │ • Smart Contract Calls    │
-                        └─────────────┬─────────────┘
+                        ┌────────────────────────────┐
+                        │        Express API         │
+                        │        (Node.js)           │
+                        │                            │
+                        │  • Report Processing       │
+                        │  • SHA-256 Hash Creation   │ 
+                        │  • Smart Contract Calls    │ 
+                        └─────────────┬──────────────┘
                                       │
                  ┌────────────────────┼────────────────────┐
                  │                    │                    │
@@ -40,10 +40,10 @@ This system enables citizens to report incidents (crime, harassment, vandalism, 
         └────────┬──────┘     └──────┬────────┘     └────────┬───────┘
                  │                   │                       │
                  │                   ▼                       ▼
-                 │             ┌─────────────┐       ┌─────────────┐
-                 │             │     IPFS    │       │  Solidity   │
-                 │             │ File Storage│       │ SmartContract│
-                 │             └─────────────┘       └─────────────┘
+                 │             ┌─────────────┐       ┌───────────────┐
+                 │             │     IPFS    │       │  Solidity     │
+                 │             │ File Storage│       │ SmartContract │
+                 │             └─────────────┘       └───────────────┘
                  │
                  ▼
         ┌───────────────────┐
