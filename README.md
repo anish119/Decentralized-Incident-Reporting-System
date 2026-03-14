@@ -84,7 +84,7 @@ Anonymous Reporting Platform/
 │   ├── models/
 │   │   └── report.js                 # Mongoose schema
 │   ├── routes/
-│   │   └── reports.js                # REST API (public summary, admin full-data, trending, verify, status)
+│   │   └── reports.js                # REST API
 │   ├── utils/
 │   │   ├── pinata.js                 # Pinata IPFS upload utility
 │   │   ├── blockchain.js             # Smart contract bridge (ethers.js)
