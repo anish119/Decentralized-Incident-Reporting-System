@@ -78,7 +78,7 @@ This system enables citizens to report incidents (crime, harassment, vandalism, 
 ## 📁 Project Structure
 
 ```
-Capstone/
+Anonymous Reporting Platform/
 ├── backend/
 │   ├── server.js                     # Express setup + MongoDB connection
 │   ├── .env                          # Environment variables (not in repo)
