@@ -11,8 +11,7 @@ export default function AdminDashboard() {
         setError('');
         try {
             const token = localStorage.getItem('token');
-            const API_URL = process.env.REACT_APP_API_URL || '';
-            const res = await axios.post(`${API_URL}/admin/generate-investigator-code`, {}, {
+            const res = await axios.post('http://localhost:5000/admin/generate-investigator-code', {}, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             setGeneratedCode(res.data.code);

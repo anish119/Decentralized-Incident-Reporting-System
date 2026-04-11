@@ -12,7 +12,7 @@ module.exports = function (req, res, next) {
   // Verify token
   try {
     const bearerToken = token.startsWith('Bearer ') ? token.slice(7, token.length) : token;
-    const decoded = jwt.verify(bearerToken, process.env.JWT_SECRET);
+    const decoded = jwt.verify(bearerToken, process.env.JWT_SECRET || 'secret123');
 
     req.user = decoded.user;
     next();
