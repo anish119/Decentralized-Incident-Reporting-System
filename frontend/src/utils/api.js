@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000'; // Backend Base URL
+const API_URL = process.env.REACT_APP_API_URL || ''; // Backend Base URL
 
 // Add token to headers if available
 const getAuthHeaders = () => {

@@ -7,7 +7,8 @@ const Login = ({ onLoginSuccess }) => {
   const [formData, setFormData] = useState({
     username: '',
     password: '',
-    role: 'user',
+    investigatorCode: '',
+    adminSecret: '',
     specializations: []
   });
   const [error, setError] = useState('');
@@ -105,33 +106,47 @@ const Login = ({ onLoginSuccess }) => {
           </div>
           
           {isRegister && (
-            <div className="form-group">
-              <label>Role:</label>
-              <select name="role" value={formData.role} onChange={handleChange}>
-                <option value="user">User / Whistleblower</option>
-                <option value="investigator">Investigator / Admin</option>
-              </select>
-            </div>
-          )}
-
-          {isRegister && formData.role === 'investigator' && (
-            <div className="form-group">
-              <label>Specializations (Select at least one):</label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '10px' }}>
-                {['Cybercrime', 'Corruption', 'Public Disturbance', 'Illegal Activity', 'Harrasment', 'Others'].map(cat => (
-                  <label key={cat} style={{ display: 'inline-flex', alignItems: 'center', fontWeight: 'normal', fontSize: '0.9rem' }}>
-                    <input
-                      type="checkbox"
-                      value={cat}
-                      checked={formData.specializations.includes(cat)}
-                      onChange={handleSpecializationChange}
-                      style={{ marginRight: '8px', width: 'auto' }}
-                    />
-                    {cat}
-                  </label>
-                ))}
+            <>
+              <div className="form-group">
+                <label>Investigator Code (Optional):</label>
+                <input 
+                  type="text" 
+                  name="investigatorCode" 
+                  value={formData.investigatorCode} 
+                  onChange={handleChange} 
+                  placeholder="INV_XXXXXX"
+                />
               </div>
-            </div>
+              <div className="form-group">
+                <label>Admin Secret (One-time setup):</label>
+                <input 
+                  type="password" 
+                  name="adminSecret" 
+                  value={formData.adminSecret} 
+                  onChange={handleChange} 
+                />
+              </div>
+              
+              {formData.investigatorCode && (
+                <div className="form-group">
+                  <label>Specializations (Select if applying for Investigator):</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '10px' }}>
+                    {['Cybercrime', 'Corruption', 'Public Disturbance', 'Illegal Activity', 'Harrasment', 'Others'].map(cat => (
+                      <label key={cat} style={{ display: 'inline-flex', alignItems: 'center', fontWeight: 'normal', fontSize: '0.9rem' }}>
+                        <input
+                          type="checkbox"
+                          value={cat}
+                          checked={formData.specializations.includes(cat)}
+                          onChange={handleSpecializationChange}
+                          style={{ marginRight: '8px', width: 'auto' }}
+                        />
+                        {cat}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
           )}
           
           <button type="submit" className="submit-btn" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>

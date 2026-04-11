@@ -4,6 +4,7 @@ import ReportForm from './components/reportForm';
 import PublicReports from './components/PublicReports';
 import TrackReport from './components/TrackReport'; // Or we can remove this, but let's keep it if users still need to look up by ID? Actually MyReports replaced the track flow, but we can replace the tab.
 import MyReports from './components/MyReports';
+import InvestigatorDashboard from './components/InvestigatorDashboard';
 import AdminDashboard from './components/AdminDashboard';
 import Login from './components/Login';
 
@@ -31,8 +32,10 @@ function App() {
 
   const handleLoginSuccess = (userData) => {
     setUser(userData);
-    if (userData.role === 'investigator') {
-      setActiveTab('admin');
+    if (userData.role === 'admin') {
+      setActiveTab('system-admin');
+    } else if (userData.role === 'investigator') {
+      setActiveTab('admin-dashboard'); // Keeping naming consistent with current state if possible, or rename
     } else {
       setActiveTab('my-reports');
     }
@@ -103,9 +106,16 @@ function App() {
 
         {user && user.role === 'investigator' && (
           <button
-            className={`tab-btn ${activeTab === 'admin' ? 'admin-active' : ''}`}
-            onClick={() => setActiveTab('admin')}
+            className={`tab-btn ${activeTab === 'admin-dashboard' ? 'admin-active' : ''}`}
+            onClick={() => setActiveTab('admin-dashboard')}
           >🛡️ Investigator Dashboard</button>
+        )}
+
+        {user && user.role === 'admin' && (
+          <button
+            className={`tab-btn ${activeTab === 'system-admin' ? 'admin-active' : ''}`}
+            onClick={() => setActiveTab('system-admin')}
+          >⚙️ System Admin</button>
         )}
       </div>
 
@@ -115,7 +125,8 @@ function App() {
         {activeTab === 'submit' && user && user.role === 'user' && <ReportForm onReportSubmitted={handleReportSubmitted} />}
         {activeTab === 'my-reports' && user && user.role === 'user' && <MyReports />}
         {activeTab === 'track' && user && user.role === 'user' && <TrackReport />}
-        {activeTab === 'admin' && user && user.role === 'investigator' && <AdminDashboard />}
+        {activeTab === 'admin-dashboard' && user && user.role === 'investigator' && <InvestigatorDashboard />}
+        {activeTab === 'system-admin' && user && user.role === 'admin' && <AdminDashboard />}
       </div>
     </div>
   );

@@ -5,7 +5,7 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   walletAddress: { type: String, required: true, unique: true },
   nonce: { type: String }, // Used for MetaMask signature validation
-  role: { type: String, enum: ['user', 'investigator'], default: 'user' },
+  role: { type: String, enum: ['user', 'investigator', 'admin'], default: 'user' },
   specializations: [{ type: String }],
   createdAt: { type: Date, default: Date.now }
 });

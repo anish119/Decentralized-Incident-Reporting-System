@@ -5,11 +5,12 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { ethers } = require('ethers');
 const User = require('../models/User');
+const InvestigatorCode = require('../models/InvestigatorCode');
 
 // POST: /auth/register
 router.post('/register', async (req, res) => {
   try {
-    const { username, password, role, specializations, walletAddress } = req.body;
+    const { username, password, investigatorCode, adminSecret, specializations, walletAddress } = req.body;
 
     if (!username || !password || !walletAddress) {
       return res.status(400).json({ msg: 'Please enter all fields, including wallet address' });
@@ -21,11 +22,37 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ msg: 'User or wallet already exists' });
     }
 
+    let role = 'user'; // Default role
+
+    // Check for Admin creation
+    if (adminSecret) {
+      const adminExists = await User.findOne({ role: 'admin' });
+      if (!adminExists && adminSecret === process.env.ADMIN_SECRET) {
+        role = 'admin';
+      } else if (adminSecret === process.env.ADMIN_SECRET) {
+         // If admin already exists, we don't allow secret-based creation anymore
+         // But maybe we should return an error if they tried? 
+         // User requirement says: "disable further admin creation using ADMIN_SECRET"
+      }
+    }
+
+    // Check for Investigator code
+    if (role === 'user' && investigatorCode) {
+      const codeRecord = await InvestigatorCode.findOne({ code: investigatorCode, used: false });
+      if (codeRecord) {
+        role = 'investigator';
+        codeRecord.used = true;
+        await codeRecord.save();
+      } else {
+        return res.status(400).json({ msg: 'Invalid investigator code. Please try again.' });
+      }
+    }
+
     user = new User({
       username,
       password,
       walletAddress: walletAddress.toLowerCase(),
-      role: role || 'user',
+      role: role,
       specializations: role === 'investigator' && specializations ? specializations : []
     });
 
@@ -47,7 +74,7 @@ router.post('/register', async (req, res) => {
 
     jwt.sign(
       payload,
-      process.env.JWT_SECRET || 'secret123',
+      process.env.JWT_SECRET,
       { expiresIn: 360000 },
       (err, token) => {
         if (err) throw err;
@@ -131,7 +158,7 @@ router.post('/login', async (req, res) => {
 
     jwt.sign(
       payload,
-      process.env.JWT_SECRET || 'secret123',
+      process.env.JWT_SECRET,
       { expiresIn: 360000 },
       (err, token) => {
         if (err) throw err;
