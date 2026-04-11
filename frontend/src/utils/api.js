@@ -22,12 +22,21 @@ export const loginUser = async (data) => {
   return response.data;
 };
 
-// Submit report with image
+// MetaMask Auth APIs
+export const getNonce = async (walletAddress) => {
+  const response = await axios.get(`${API_URL}/auth/nonce/${walletAddress}`);
+  return response.data;
+};
+
+// Submit report with file uploads (multipart/form-data)
+// IMPORTANT: Do NOT manually set Content-Type here.
+// When body is FormData, axios automatically sets Content-Type: multipart/form-data; boundary=...
+// Manually setting it would erase the boundary, breaking multer's ability to parse files.
 export const submitReport = async (data) => {
   const response = await axios.post(`${API_URL}/reports`, data, {
     headers: {
-      'Content-Type': 'multipart/form-data',
       ...getAuthHeaders(),
+      // Content-Type intentionally omitted — let axios auto-detect for FormData
     },
   });
   return response.data;

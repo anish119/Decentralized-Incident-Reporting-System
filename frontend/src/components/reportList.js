@@ -125,15 +125,12 @@ const ReportList = forwardRef(({ isAdmin = false }, ref) => {
                 }}
               >
                 <option value="All">All Topics</option>
-                <option value="Theft">Theft</option>
-                <option value="Assault">Assault</option>
-                <option value="Vandalism">Vandalism</option>
-                <option value="Fraud">Fraud</option>
-                <option value="Harassment">Harassment</option>
-                <option value="Drug Activity">Drug Activity</option>
-                <option value="Traffic Violation">Traffic Violation</option>
+                <option value="Cybercrime">Cybercrime</option>
+                <option value="Corruption">Corruption</option>
                 <option value="Public Disturbance">Public Disturbance</option>
-                <option value="Other">Other</option>
+                <option value="Illegal Activity">Illegal Activity</option>
+                <option value="Harrasment">Harrasment</option>
+                <option value="Others">Others</option>
               </select>
             </div>
 
@@ -275,39 +272,38 @@ const ReportList = forwardRef(({ isAdmin = false }, ref) => {
 
               {/* Investigator Private Communication View */}
               {isAdmin && !report.isLockedToOther && (
-                <div className="communication-thread" style={{ marginTop: '24px', borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
+                <div className="communication-thread">
                   <h3>Investigation Thread</h3>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                      Private communication with the report creator. Only your assigned cases will allow you to claim this thread.
+                  <p className="helper-text" style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
+                      Private communication with the report creator.
                   </p>
                   
-                  <div className="messages-list" style={{ maxHeight: '250px', overflowY: 'auto', margin: '16px 0', background: 'var(--bg-card-hover)', padding: '10px', borderRadius: '8px' }}>
+                  <div className="messages-list">
                       {(!report.messages || report.messages.length === 0) ? (
-                        <p style={{ fontSize: '0.85rem' }}>No messages sent yet. Send a message to auto-claim this report.</p>
+                        <p className="empty-state">No messages sent yet. Send a message to auto-claim this report.</p>
                       ) : report.messages.map((m, i) => (
-                          <div key={i} style={{ marginBottom: '10px', textAlign: m.senderRole === 'investigator' ? 'right' : 'left' }}>
-                              <div style={{ display: 'inline-block', maxWidth: '80%', padding: '8px 12px', borderRadius: '12px', background: m.senderRole === 'investigator' ? 'var(--primary-dark)' : 'var(--bg-input)' }}>
-                                  <span style={{ fontSize: '0.75rem', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>
-                                      {m.senderRole === 'investigator' ? 'Investigator (You)' : 'Reporter'}
-                                  </span>
-                                  {m.text}
-                                  <span style={{ fontSize: '0.65rem', display: 'block', marginTop: '4px', opacity: 0.7 }}>
-                                      {new Date(m.createdAt).toLocaleTimeString()}
-                                  </span>
-                              </div>
+                          <div key={i} className={`message-bubble ${m.senderRole === 'investigator' ? 'user' : 'investigator'}`}>
+                              <span className="message-meta">
+                                  {m.senderRole === 'investigator' ? 'Investigator (You)' : 'Reporter'}
+                              </span>
+                              {m.text}
+                              <span className="message-time">
+                                  {new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </span>
                           </div>
                       ))}
                   </div>
 
-                  <form onSubmit={(e) => handleSendMessage(report.reportId, e)} style={{ display: 'flex', gap: '8px' }}>
+                  <form onSubmit={(e) => handleSendMessage(report.reportId, e)} className="message-input-form" style={{ display: 'flex', gap: '8px' }}>
                       <input 
                           type="text" 
                           value={newMessages[report.reportId] || ''} 
                           onChange={(e) => setNewMessages(prev => ({ ...prev, [report.reportId]: e.target.value }))} 
                           placeholder="Send clarification request or status update..." 
-                          style={{ flex: 1, padding: '10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-input)', color: 'var(--text)' }} 
+                          className="form-control"
+                          style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-input)', color: 'var(--text)' }} 
                       />
-                      <button type="submit" className="btn-submit" style={{ margin: 0, padding: '10px 20px' }}>Send</button>
+                      <button type="submit" className="btn-submit" style={{ margin: 0, width: 'auto', padding: '0 24px' }}>Send</button>
                   </form>
                 </div>
               )}

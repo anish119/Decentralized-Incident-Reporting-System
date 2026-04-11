@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { loginUser, registerUser } from '../utils/api';
+import { loginUser, registerUser, getNonce } from '../utils/api';
 import './Login.css';
 
 const Login = ({ onLoginSuccess }) => {
@@ -30,11 +30,40 @@ const Login = ({ onLoginSuccess }) => {
     e.preventDefault();
     setError('');
     try {
+      if (!window.ethereum) {
+        throw new Error('MetaMask is not installed. Please install it to use this app.');
+      }
+
+      // Request account access
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      const walletAddress = accounts[0];
+
       let data;
       if (isRegister) {
-        data = await registerUser(formData);
+        const registerData = {
+          ...formData,
+          walletAddress
+        };
+        data = await registerUser(registerData);
       } else {
-        data = await loginUser({ username: formData.username, password: formData.password });
+        const { nonce } = await getNonce(walletAddress);
+
+        const message = `Please sign this message to login to the Decentralized Incident Reporting System.\n\nNonce: ${nonce}`;
+        const hexMessage = "0x" + Array.from(message).map(c => 
+          c.charCodeAt(0) < 128 ? c.charCodeAt(0).toString(16).padStart(2, '0') : encodeURIComponent(c).replace(/\%/g,'').toLowerCase()
+        ).join('');
+
+        const signature = await window.ethereum.request({
+          method: 'personal_sign',
+          params: [hexMessage, walletAddress],
+        });
+
+        data = await loginUser({ 
+          username: formData.username, 
+          password: formData.password,
+          walletAddress,
+          signature
+        });
       }
       
       // Save token and user basic info
@@ -43,7 +72,8 @@ const Login = ({ onLoginSuccess }) => {
       
       onLoginSuccess(data.user);
     } catch (err) {
-      setError(err.response?.data?.msg || 'An error occurred. Please try again.');
+      console.error(err);
+      setError(err.response?.data?.msg || err.message || 'An error occurred. Please try again.');
     }
   };
 
@@ -88,7 +118,7 @@ const Login = ({ onLoginSuccess }) => {
             <div className="form-group">
               <label>Specializations (Select at least one):</label>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '10px' }}>
-                {['Theft', 'Assault', 'Vandalism', 'Fraud', 'Harassment', 'Drug Activity', 'Traffic Violation', 'Public Disturbance', 'Cybercrime', 'Missing Person', 'Other'].map(cat => (
+                {['Cybercrime', 'Corruption', 'Public Disturbance', 'Illegal Activity', 'Harrasment', 'Others'].map(cat => (
                   <label key={cat} style={{ display: 'inline-flex', alignItems: 'center', fontWeight: 'normal', fontSize: '0.9rem' }}>
                     <input
                       type="checkbox"
@@ -104,12 +134,13 @@ const Login = ({ onLoginSuccess }) => {
             </div>
           )}
           
-          <button type="submit" className="submit-btn">
-            {isRegister ? 'Create Account' : 'Login'}
+          <button type="submit" className="submit-btn" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+            <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" alt="MetaMask" style={{ width: '18px' }} />
+            {isRegister ? 'Register with MetaMask' : 'Login with MetaMask'}
           </button>
         </form>
         
-        <p className="toggle-mode" onClick={() => setIsRegister(!isRegister)}>
+        <p className="toggle-mode" onClick={() => setIsRegister(!isRegister)} style={{ marginTop: '20px' }}>
           {isRegister ? 'Already have an account? Login here.' : 'Need an account? Register here.'}
         </p>
       </div>

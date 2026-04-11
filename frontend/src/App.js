@@ -10,14 +10,24 @@ import Login from './components/Login';
 function App() {
   const [activeTab, setActiveTab] = useState('reports'); // default to public reports
   const [user, setUser] = useState(null);
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
 
   useEffect(() => {
+    // Apply theme
+    document.body.setAttribute('data-theme', theme);
+
     // Check if user is logged in
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
-  }, []);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+  };
 
   const handleLoginSuccess = (userData) => {
     setUser(userData);
@@ -44,15 +54,20 @@ function App() {
       <header className="app-header">
         <div className="header-content">
           <div>
-            <h1>Voices Unchained: Anonymous Reporting System</h1>
-            <p>Report incidents securely with blockchain-backed evidence</p>
+            <h1>Voices Unchained</h1>
+            <p>Secure Anonymous Reporting System</p>
           </div>
-          {user && (
-            <div className="user-info">
-              <span>Welcome, {user.username} ({user.role})</span>
-              <button onClick={handleLogout} className="logout-btn">Logout</button>
-            </div>
-          )}
+          <div className="header-actions">
+            <button onClick={toggleTheme} className="theme-toggle" title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}>
+              {theme === 'dark' ? '☀️' : '🌙'}
+            </button>
+            {user && (
+              <div className="user-info">
+                <span className="user-name">{user.username}</span>
+                <button onClick={handleLogout} className="logout-btn">Logout</button>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
@@ -95,7 +110,7 @@ function App() {
       </div>
 
       <div className="tab-content">
-        {activeTab === 'reports' && <PublicReports />}
+        {activeTab === 'reports' && <PublicReports onRedirectLogin={() => setActiveTab('login')} />}
         {activeTab === 'login' && !user && <Login onLoginSuccess={handleLoginSuccess} />}
         {activeTab === 'submit' && user && user.role === 'user' && <ReportForm onReportSubmitted={handleReportSubmitted} />}
         {activeTab === 'my-reports' && user && user.role === 'user' && <MyReports />}

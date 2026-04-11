@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { getReportById, verifyReportOnChain, getReportMessages, sendReportMessage } from '../utils/api';
+import EvidencePreview from './EvidencePreview';
 
 // Helper: compute a human-readable relative time string
 function timeAgo(dateString) {
@@ -94,7 +95,7 @@ export default function TrackReport() {
             <form className="report-form" onSubmit={handleSearch}>
                 <div className="form-group">
                     <label htmlFor="searchId">Secure Report ID</label>
-                    <div style={{ display: 'flex', gap: '10px' }}>
+                    <div className="search-container" style={{ display: 'flex', gap: '10px' }}>
                         <input
                             type="text"
                             id="searchId"
@@ -103,11 +104,11 @@ export default function TrackReport() {
                             onChange={(e) => setReportId(e.target.value)}
                             style={{ flex: 1 }}
                         />
-                        <button type="submit" className="btn-submit" style={{ marginTop: 0 }} disabled={loading}>
+                        <button type="submit" className="btn-submit" style={{ marginTop: 0, width: 'auto' }} disabled={loading}>
                             {loading ? 'Searching...' : 'Track'}
                         </button>
                     </div>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: '6px' }}>
+                    <p className="helper-text" style={{ fontSize: '0.8rem', marginTop: '8px', color: 'var(--text-muted)' }}>
                         🔒 Your Report ID is your private access key. Do not share it publicly.
                     </p>
                 </div>
@@ -128,149 +129,84 @@ export default function TrackReport() {
                         <p><strong>Category:</strong> {report.category}</p>
                         <p><strong>Description:</strong> {report.description}</p>
                         <p><strong>Location:</strong> {report.locationText || 'N/A'}</p>
-                        <p><strong>Submitted:</strong> {new Date(report.createdAt).toLocaleString()}
-                            <span className="time-ago" style={{ marginLeft: '8px' }}>
-                                ({timeAgo(report.createdAt)})
-                            </span>
-                        </p>
+                        <EvidencePreview report={report} />
 
                         {/* Cryptographic Verification Box */}
                         {verification && verification.verified && (
-                            <div className="verification-box" style={{
-                                marginTop: '16px',
-                                padding: '16px',
-                                background: 'rgba(0, 184, 148, 0.1)',
-                                border: '1px solid rgba(0, 184, 148, 0.3)',
-                                borderRadius: '8px'
-                            }}>
-                                <h4 style={{
-                                    color: 'var(--success)',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '8px',
-                                    marginBottom: '8px'
-                                }}>
-                                    ✅ On-Chain Verification Passed
-                                </h4>
+                            <div className="verification-box passed">
+                                <h4>✅ On-Chain Verification Passed</h4>
                                 <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{verification.message}</p>
                                 {verification.blockchainHash && (
-                                    <div className="tx-hash-display" style={{ marginTop: '8px', paddingTop: '8px' }}>
-                                        <strong>Secured Hash on Blockchain:</strong><br />
-                                        <span style={{ fontFamily: 'monospace', fontSize: '0.8rem', wordBreak: 'break-all' }}>
-                                            {verification.blockchainHash}
-                                        </span>
+                                    <div className="tx-hash-display">
+                                        <label>Secured Hash on Blockchain</label>
+                                        <code>{verification.blockchainHash}</code>
                                     </div>
                                 )}
                                 {report.txHash && report.txHash !== 'Blockchain pending' && (
-                                    <div className="tx-hash-display" style={{ marginTop: '4px', paddingTop: '4px', borderTop: 'none' }}>
-                                        <strong>Ethereum Tx:</strong><br />
-                                        <span style={{ fontFamily: 'monospace', fontSize: '0.8rem', wordBreak: 'break-all' }}>
-                                            {report.txHash}
-                                        </span>
+                                    <div className="tx-hash-display">
+                                        <label>Ethereum Transaction</label>
+                                        <code>{report.txHash}</code>
                                     </div>
                                 )}
                             </div>
                         )}
                         {verification && !verification.verified && verification.reason === 'hash_mismatch' && (
-                            <div className="verification-box" style={{
-                                marginTop: '16px',
-                                padding: '16px',
-                                background: 'rgba(225, 112, 85, 0.1)',
-                                border: '1px solid rgba(225, 112, 85, 0.3)',
-                                borderRadius: '8px'
-                            }}>
-                                <h4 style={{
-                                    color: 'var(--error)',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '8px',
-                                    marginBottom: '8px'
-                                }}>
-                                    ❌ TAMPERING DETECTED
-                                </h4>
+                            <div className="verification-box failed">
+                                <h4 style={{ color: 'var(--error)' }}>❌ TAMPERING DETECTED</h4>
                                 <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{verification.message}</p>
                                 {verification.recalculatedHash && (
-                                    <div className="tx-hash-display" style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid rgba(225, 112, 85, 0.3)' }}>
-                                        <strong style={{ color: 'var(--error)' }}>Current Database Data Hash (Mismatch!):</strong><br />
-                                        <span style={{ fontFamily: 'monospace', fontSize: '0.8rem', wordBreak: 'break-all', color: 'var(--error)' }}>
-                                            {verification.recalculatedHash}
-                                        </span>
+                                    <div className="tx-hash-display">
+                                        <label style={{ color: 'var(--error)' }}>Current Database Data Hash (Mismatch!)</label>
+                                        <code style={{ color: 'var(--error)' }}>{verification.recalculatedHash}</code>
                                     </div>
                                 )}
                             </div>
                         )}
                         {verification && !verification.verified && verification.reason !== 'hash_mismatch' && (
-                            <div className="verification-box" style={{
-                                marginTop: '16px',
-                                padding: '16px',
-                                background: 'rgba(255, 193, 7, 0.1)',
-                                border: '1px solid rgba(255, 193, 7, 0.3)',
-                                borderRadius: '8px'
-                            }}>
-                                <h4 style={{
-                                    color: '#e6a800',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '8px',
-                                    marginBottom: '8px'
-                                }}>
-                                    ⚠️ Not Found on Blockchain
-                                </h4>
+                            <div className="verification-box">
+                                <h4 style={{ color: 'var(--warning)' }}>⚠️ Not Found on Blockchain</h4>
                                 <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{verification.message}</p>
                                 {report.txHash && report.txHash !== 'Blockchain pending' && (
-                                    <div className="tx-hash-display" style={{ marginTop: '4px', paddingTop: '4px' }}>
-                                        <strong>Original Ethereum Tx:</strong><br />
-                                        <span style={{ fontFamily: 'monospace', fontSize: '0.8rem', wordBreak: 'break-all' }}>
-                                            {report.txHash}
-                                        </span>
+                                    <div className="tx-hash-display">
+                                        <label>Original Ethereum Tx</label>
+                                        <code>{report.txHash}</code>
                                     </div>
                                 )}
                             </div>
                         )}
 
-                        {/* Only show evidence image if a real CID exists (not NO_IMAGE) */}
-                        {report.imageCID && report.imageCID !== 'NO_IMAGE' && (
-                            <div className="report-image" style={{ marginTop: '20px' }}>
-                                <p style={{ marginBottom: '8px' }}><strong>Evidence Image:</strong></p>
-                                <img
-                                    src={`https://gateway.pinata.cloud/ipfs/${report.imageCID}`}
-                                    alt="Report evidence"
-                                    style={{ maxWidth: '100%', borderRadius: '8px' }}
-                                />
-                            </div>
-                        )}
+
 
                         {/* Private Communication Thread */}
                         {!messagesError && (
-                            <div className="communication-thread" style={{ marginTop: '24px', borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
+                            <div className="communication-thread">
                                 <h3>Private Communication</h3>
-                                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                                <p className="helper-text" style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
                                     This thread is strictly between you and the assigned investigator.
                                 </p>
-                                <div className="messages-list" style={{ maxHeight: '300px', overflowY: 'auto', margin: '16px 0', background: 'var(--bg-card-hover)', padding: '10px', borderRadius: '8px' }}>
-                                    {messages.length === 0 ? <p>No messages yet.</p> : messages.map((m, i) => (
-                                        <div key={i} style={{ marginBottom: '10px', textAlign: m.senderRole === 'user' ? 'right' : 'left' }}>
-                                            <div style={{ display: 'inline-block', maxWidth: '80%', padding: '8px 12px', borderRadius: '12px', background: m.senderRole === 'user' ? 'var(--primary-dark)' : 'var(--bg-input)' }}>
-                                                <span style={{ fontSize: '0.75rem', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>
-                                                    {m.senderRole === 'user' ? 'You' : 'Investigator'}
-                                                </span>
-                                                {m.text}
-                                                <span style={{ fontSize: '0.65rem', display: 'block', marginTop: '4px', opacity: 0.7 }}>
-                                                    {new Date(m.createdAt).toLocaleTimeString()}
-                                                </span>
-                                            </div>
+                                <div className="messages-list">
+                                    {messages.length === 0 ? <p className="empty-state" style={{ padding: '20px' }}>No messages yet.</p> : messages.map((m, i) => (
+                                        <div key={i} className={`message-bubble ${m.senderRole === 'user' ? 'user' : 'investigator'}`}>
+                                            <span className="message-meta">
+                                                {m.senderRole === 'user' ? 'You' : 'Investigator'}
+                                            </span>
+                                            {m.text}
+                                            <span className="message-time">
+                                                {new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            </span>
                                         </div>
                                     ))}
                                 </div>
-                                <form onSubmit={handleSendMessage} style={{ display: 'flex', gap: '8px' }}>
+                                <form onSubmit={handleSendMessage} className="message-input-form" style={{ display: 'flex', gap: '8px' }}>
                                     <input 
                                         type="text" 
                                         value={newMessage} 
                                         onChange={(e) => setNewMessage(e.target.value)} 
                                         placeholder="Type a reply to the investigator..." 
-                                        style={{ flex: 1, padding: '10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-input)', color: 'var(--text)' }} 
+                                        className="form-control"
+                                        style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg-input)', color: 'var(--text)' }} 
                                     />
-                                    <button type="submit" className="btn-submit" style={{ margin: 0, padding: '10px 20px' }}>Send</button>
+                                    <button type="submit" className="btn-submit" style={{ margin: 0, width: 'auto', padding: '0 24px' }}>Send</button>
                                 </form>
                             </div>
                         )}
