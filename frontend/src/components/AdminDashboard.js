@@ -1,20 +1,17 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import { generateInvestigatorCode } from '../utils/api';
 
 export default function AdminDashboard() {
     const [generatedCode, setGeneratedCode] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    const generateCode = async () => {
+    const handleGenerateCode = async () => {
         setLoading(true);
         setError('');
         try {
-            const token = localStorage.getItem('token');
-            const res = await axios.post('http://localhost:5000/admin/generate-investigator-code', {}, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            setGeneratedCode(res.data.code);
+            const data = await generateInvestigatorCode();
+            setGeneratedCode(data.code);
         } catch (err) {
             setError(err.response?.data?.msg || 'Failed to generate code');
         } finally {
@@ -32,7 +29,7 @@ export default function AdminDashboard() {
                 <p>Generate a one-time use code for new investigators to register.</p>
                 
                 <button 
-                    onClick={generateCode} 
+                    onClick={handleGenerateCode} 
                     disabled={loading}
                     className="submit-btn"
                     style={{ width: 'auto', padding: '10px 20px', marginTop: '10px' }}

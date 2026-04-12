@@ -17,9 +17,9 @@ app.use((req, res, next) => {
 const reportRoutes = require('./routes/reports');
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
-app.use('/reports', reportRoutes);
-app.use('/auth', authRoutes);
-app.use('/admin', adminRoutes);
+app.use('/api/reports', reportRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Global error handler
 app.use((err, req, res, next) => {
