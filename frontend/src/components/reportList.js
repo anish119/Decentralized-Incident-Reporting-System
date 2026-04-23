@@ -1,5 +1,6 @@
 import { useEffect, useState, forwardRef, useImperativeHandle } from 'react';
 import { getAllReports, getTrendingReports, updateReportStatus, verifyReportOnChain, sendReportMessage } from '../utils/api';
+import EvidencePreview from './EvidencePreview';
 
 // Helper: compute a human-readable relative time string
 function timeAgo(dateString) {
@@ -236,21 +237,8 @@ const ReportList = forwardRef(({ isAdmin = false }, ref) => {
               <p><strong>Location:</strong> {report.locationText || report.location?.coordinates?.join(', ') || 'N/A'}</p>
 
               {report.imageCID && report.imageCID !== "NO_IMAGE" && (
-                <div className="report-image" style={{ marginTop: '15px' }}>
-                  <img
-                    src={`https://gateway.pinata.cloud/ipfs/${report.imageCID}`}
-                    alt="Evidence"
-                    onClick={() => setSelectedImage(report.imageCID)}
-                    style={{
-                      width: '100%',
-                      maxHeight: '400px',
-                      objectFit: 'contain',
-                      borderRadius: '12px',
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      background: 'rgba(0,0,0,0.2)',
-                      cursor: 'zoom-in'
-                    }}
-                  />
+                <div style={{ marginTop: '15px' }}>
+                  <EvidencePreview report={report} onImageClick={setSelectedImage} />
                 </div>
               )}
 
@@ -318,11 +306,10 @@ const ReportList = forwardRef(({ isAdmin = false }, ref) => {
         ))}
       </div>
 
-      {/* Image Modal overlay */}
       {selectedImage && (
         <div className="image-modal-overlay" onClick={() => setSelectedImage(null)}>
           <img
-            src={`https://gateway.pinata.cloud/ipfs/${selectedImage}`}
+            src={selectedImage.startsWith('http') ? selectedImage : `https://gateway.pinata.cloud/ipfs/${selectedImage}`}
             alt="Enlarged Evidence"
             className="image-modal-content"
           />

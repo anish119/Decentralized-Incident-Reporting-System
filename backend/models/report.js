@@ -10,6 +10,7 @@ const reportSchema = new mongoose.Schema({
     coordinates: { type: [Number] }               // [longitude, latitude]
   },
   imageCID: { type: String },                     // Image CID from Pinata
+  evidenceType: { type: String, default: 'image' },
   blockchainHash: { type: String },
   txHash: { type: String, default: null },
   status: { type: String, default: 'Pending Review' },

@@ -7,10 +7,29 @@ const { uploadFileToPinata } = require('../utils/pinata');
 const { storeHashOnChain, updateStatusOnChain, verifyHashOnChain } = require('../utils/blockchain');
 const auth = require('../middleware/auth');
 
+const allowedTypes = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "video/mp4",
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+];
+
+function fileFilter(req, file, cb) {
+  if (allowedTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error("Unsupported file format. Upload image, video, or document."));
+  }
+}
+
 // Memory storage for stability
 const upload = multer({ 
   storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 } // 10MB
+  limits: { fileSize: 25 * 1024 * 1024 }, // 25MB
+  fileFilter
 });
 
 // POST: submit a report (Single image only)
@@ -18,8 +37,12 @@ router.post('/', auth, upload.single('file'), async (req, res) => {
   try {
     const { category, description, locationText, longitude, latitude } = req.body;
     let imageCID = 'NO_IMAGE';
+    let evidenceType = 'image';
 
     if (req.file) {
+      if (req.file.mimetype.startsWith('video')) evidenceType = 'video';
+      else if (req.file.mimetype === 'application/pdf' || req.file.mimetype === 'application/msword' || req.file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') evidenceType = 'document';
+
       imageCID = await uploadFileToPinata(req.file.buffer, req.file.originalname, req.file.mimetype);
     }
 
@@ -35,6 +58,7 @@ router.post('/', auth, upload.single('file'), async (req, res) => {
       locationText,
       category,
       imageCID,
+      evidenceType,
       blockchainHash,
       status: 'Pending',
       userId: req.user.id,
@@ -77,8 +101,10 @@ router.get('/', async (req, res) => {
         .createHash('sha256')
         .update(r.reportId + r.description + r.locationText + r.category + (r.imageCID || 'NO_IMAGE'))
         .digest('hex');
+      const obj = r.toObject();
+      delete obj.messages; // Hide private messages from public feed
       return {
-        ...r.toObject(),
+        ...obj,
         isTampered: r.blockchainHash && r.txHash && r.txHash !== 'Blockchain pending' 
           ? recalculatedHash !== r.blockchainHash 
           : false
@@ -115,7 +141,18 @@ router.get('/all', auth, async (req, res) => {
   try {
     if (req.user.role !== 'investigator') return res.status(403).json({ error: 'Not authorized' });
     const reports = await Report.find().sort({ createdAt: -1 });
-    res.json(reports);
+    const processed = reports.map(r => {
+      const obj = r.toObject();
+      let isLockedToOther = false;
+      if (obj.assignedInvestigator && obj.assignedInvestigator.toString() !== req.user.id) {
+        isLockedToOther = true;
+      }
+      if (isLockedToOther) {
+        obj.messages = [];
+      }
+      return { ...obj, isLockedToOther };
+    });
+    res.json(processed);
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
   }
@@ -125,7 +162,9 @@ router.get('/:reportId', async (req, res) => {
   try {
     const report = await Report.findOne({ reportId: req.params.reportId });
     if (!report) return res.status(404).json({ error: 'Not found' });
-    res.json(report);
+    const obj = report.toObject();
+    delete obj.messages; // Hide messages from public endpoint
+    res.json(obj);
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
   }
@@ -193,6 +232,19 @@ router.post('/:reportId/messages', auth, async (req, res) => {
     const { text } = req.body;
     const report = await Report.findOne({ reportId: req.params.reportId });
     if (!report) return res.status(404).json({ error: 'Not found' });
+    
+    if (req.user.role === 'investigator') {
+      if (!report.assignedInvestigator) {
+        report.assignedInvestigator = req.user.id;
+      } else if (report.assignedInvestigator.toString() !== req.user.id) {
+        return res.status(403).json({ error: 'Report is locked by another investigator' });
+      }
+    } else if (req.user.role === 'user') {
+      if (report.userId.toString() !== req.user.id) {
+        return res.status(403).json({ error: 'Not authorized to send messages for this report' });
+      }
+    }
+
     const newMessage = { senderId: req.user.id, senderRole: req.user.role, text, createdAt: new Date() };
     report.messages.push(newMessage);
     await report.save();
@@ -206,6 +258,17 @@ router.get('/:reportId/messages', auth, async (req, res) => {
   try {
     const report = await Report.findOne({ reportId: req.params.reportId });
     if (!report) return res.status(404).json({ error: 'Not found' });
+    
+    if (req.user.role === 'investigator') {
+      if (report.assignedInvestigator && report.assignedInvestigator.toString() !== req.user.id) {
+        return res.status(403).json({ error: 'Report is locked by another investigator' });
+      }
+    } else if (req.user.role === 'user') {
+      if (report.userId.toString() !== req.user.id) {
+        return res.status(403).json({ error: 'Not authorized to view messages for this report' });
+      }
+    }
+    
     res.json({ messages: report.messages || [] });
   } catch (err) {
     res.status(500).json({ error: 'Server error' });

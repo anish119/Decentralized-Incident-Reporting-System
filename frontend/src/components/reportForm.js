@@ -89,8 +89,8 @@ export default function ReportForm({ onReportSubmitted }) {
         </div>
 
         <div className="form-group">
-          <label>Evidence Image (Optional)</label>
-          <input type="file" accept="image/*" onChange={e => setFile(e.target.files[0])} />
+          <label>Evidence (Image/Video/Document)</label>
+          <input type="file" accept="image/*,video/mp4,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onChange={e => setFile(e.target.files[0])} />
         </div>
 
         <button type="submit" className="btn-submit" disabled={submitting}>
